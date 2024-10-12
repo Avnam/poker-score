@@ -202,8 +202,21 @@ function calculate() {
         balances[name] = (totalOut[name] || 0) - (totalIn[name] || 0);
     }
 
+    // Clear previous debts from lines at the start
+    participants.forEach((select) => {
+            const row = select.parentElement;
+            const debtInfoElement = row.querySelector('.debtInfo');
+            debtInfoElement.innerHTML = ''; // Clear previous debts
+        });
+
+    // Clear previous debts from lines at the start
+    participants.forEach((select) => {
+        const row = select.parentElement;
+        const debtInfoElement = row.querySelector('.debtInfo');
+        debtInfoElement.innerHTML = ''; // Clear previous debts
+    });
+
     // Determine who owes whom
-    const debts = [];
     const positiveBalances = Object.keys(balances).filter(name => balances[name] > 0);
     const negativeBalances = Object.keys(balances).filter(name => balances[name] < 0);
 
@@ -212,13 +225,13 @@ function calculate() {
         negativeBalances.forEach(debtor => {
             const amountToPay = Math.min(-balances[debtor], amountOwed);
             if (amountToPay > 0) {
-                debts.push(`${debtor} owes ${creditor} ${amountToPay}`);
+                // Update the original participant line with debt information
+                const debtorRow = participants.find((select) => select.value === debtor).parentElement;
+                debtorRow.querySelector('.debtInfo').innerHTML += `${amountToPay} --> ${creditor}, `;
+
+                // debts.push(`${debtor} owes ${creditor} ${amountToPay}`);
                 balances[creditor] -= amountToPay;
                 balances[debtor] += amountToPay;
-
-                // Update the original participant line with debt information
-                const debtorRow = participants.find((select, index) => select.value === debtor).parentElement;
-                debtorRow.querySelector('.debtInfo').innerHTML += `${amountToPay} --> ${creditor}, `;
             }
         });
     });

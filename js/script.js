@@ -13,51 +13,39 @@ function getFromLocalStorage(key) {
     return value ? JSON.parse(value) : null;
 }
 
-// Function to show the modal for adding a new player
+// Show the modal for adding a new player
 document.getElementById('addPlayerBtn').addEventListener('click', function() {
     document.getElementById('playerNameInput').value = ''; // Clear the input field
     document.getElementById('playerModal').style.display = 'block';
-
-    // Set focus on the input field
     document.getElementById('playerNameInput').focus();
 });
 
-// Handle OK button for adding a player
-document.getElementById('okPlayerBtn').addEventListener('click', function() {
-    addPlayer();
-});
+// Handle OK and Cancel buttons
+document.getElementById('okPlayerBtn').addEventListener('click', addPlayer);
+document.getElementById('cancelPlayerBtn').addEventListener('click', closeModal);
 
-// Handle Cancel button
-document.getElementById('cancelPlayerBtn').addEventListener('click', function() {
-    closeModal();
-});
-
-// Add event listeners for Enter and Escape keys
+// Event listeners for Enter and Escape keys in the modal
 document.getElementById('playerModal').addEventListener('keydown', function(event) {
-    if (event.key === 'Enter') {
-        addPlayer();  // Same as pressing OK
-    } else if (event.key === 'Escape') {
-        closeModal(); // Same as pressing Cancel
-    }
+    if (event.key === 'Enter') addPlayer();
+    if (event.key === 'Escape') closeModal();
 });
 
-// Function to add a player
+// Add a player and update the participant list
 function addPlayer() {
     const playerName = document.getElementById('playerNameInput').value.trim();
     if (playerName && !playerNames.includes(playerName)) {
         playerNames.push(playerName);
-        saveToLocalStorage('players', playerNames); // Save player names to Local Storage
+        saveToLocalStorage('players', playerNames);
         updateParticipantList();
     }
     closeModal();
 }
 
-// Function to close the modal
 function closeModal() {
     document.getElementById('playerModal').style.display = 'none';
 }
 
-// Populate participant selection dropdown
+// Populate the number of participants dropdown
 const numParticipantsSelect = document.getElementById('numParticipants');
 for (let i = 2; i <= 40; i++) {
     const option = document.createElement('option');
@@ -66,22 +54,15 @@ for (let i = 2; i <= 40; i++) {
     numParticipantsSelect.appendChild(option);
 }
 
-// Set the default or saved number of participants
 const lastNumParticipants = getFromLocalStorage('numParticipants');
-if (lastNumParticipants) {
-    numParticipantsSelect.value = lastNumParticipants;
-    numParticipants = parseInt(lastNumParticipants);
-} else {
-    numParticipantsSelect.value = 2;
-}
+numParticipantsSelect.value = lastNumParticipants || 2;
+numParticipants = parseInt(numParticipantsSelect.value);
 
 numParticipantsSelect.addEventListener('change', function() {
     numParticipants = parseInt(this.value);
-    saveToLocalStorage('numParticipants', numParticipants); // Save to Local Storage
+    saveToLocalStorage('numParticipants', numParticipants);
     updateParticipantList();
 });
-
-updateParticipantList();
 
 // Function to update the participant list
 function updateParticipantList() {
@@ -90,9 +71,8 @@ function updateParticipantList() {
     // Get current data from the rows to preserve
     const currentData = Array.from(participantsDiv.children).map(row => {
         const playerSelect = row.querySelector('.playerSelect').value;
-        const inValue = row.querySelector('.inValue').value;
-        const outValue = row.querySelector('.outValue').value;
-        return { playerSelect, inValue, outValue };
+        const balanceValue = row.querySelector('.balanceValue').value;
+        return { playerSelect, balanceValue };
     });
 
     // Adjust the number of rows, keeping existing data
@@ -106,8 +86,7 @@ function updateParticipantList() {
                 <option value="">Select name</option>
                 ${playerNames.map(name => `<option value="${name}">${name}</option>`).join('')}
             </select>
-            <input type="number" placeholder="In" class="inValue">
-            <input type="number" placeholder="Out" class="outValue">
+            <input type="number" placeholder="Balance" class="balanceValue">
             <span class="debtInfo" style="margin-left: 10px; font-weight: normal; color: gray;"></span>
         `;
         participantsDiv.appendChild(playerRow);
@@ -122,8 +101,7 @@ function updateParticipantList() {
     for (let i = 0; i < Math.min(currentData.length, numParticipants); i++) {
         const row = participantsDiv.children[i];
         row.querySelector('.playerSelect').value = currentData[i].playerSelect;
-        row.querySelector('.inValue').value = currentData[i].inValue;
-        row.querySelector('.outValue').value = currentData[i].outValue;
+        row.querySelector('.balanceValue').value = currentData[i].balanceValue;
     }
 
     // Add change event listeners to update available player options and Calc button state
@@ -138,20 +116,13 @@ function updateParticipantList() {
     checkCalcButtonState();   // Initial check for enabling Calc button
 }
 
-// Function to update available player names (no duplicates across selects)
+
+// Prevent duplicate player names across selects
 function updateAvailablePlayers() {
     const selectedNames = Array.from(document.querySelectorAll('.playerSelect')).map(select => select.value);
-
-    // Update each select element's options
     Array.from(document.querySelectorAll('.playerSelect')).forEach(select => {
         const currentValue = select.value;
-
-        // Filter available names to exclude names already selected in other selects
-        const availablePlayerNames = playerNames.filter(name => 
-            !selectedNames.includes(name) || name === currentValue
-        );
-
-        // Rebuild the options for this select element
+        const availablePlayerNames = playerNames.filter(name => !selectedNames.includes(name) || name === currentValue);
         select.innerHTML = `
             <option value="">Select name</option>
             ${availablePlayerNames.map(name => 
@@ -161,96 +132,80 @@ function updateAvailablePlayers() {
     });
 }
 
-// Check if the Calculate button can be enabled
+// Enable the Calculate button when all players are selected
 function checkCalcButtonState() {
     const allSelected = Array.from(document.querySelectorAll('.playerSelect')).every(select => select.value !== "");
     document.getElementById('calcBtn').disabled = !allSelected;
 }
 
-// Load saved player names from Local Storage
+// Load saved player names and update the list
 const savedPlayers = getFromLocalStorage('players');
 if (savedPlayers) {
     playerNames = savedPlayers;
     updateParticipantList();
 }
 
-
-// Function to calculate debts and display results
+// Calculate and display balances
 function calculate() {
     const participants = Array.from(document.querySelectorAll('.playerSelect'));
-    const inValues = Array.from(document.querySelectorAll('.inValue'));
-    const outValues = Array.from(document.querySelectorAll('.outValue'));
+    const balanceValues = Array.from(document.querySelectorAll('.balanceValue'));
+    const balances = {};
 
-    const totalIn = {};
-    const totalOut = {};
-
-    // Initialize totals for each participant
     participants.forEach((select, index) => {
         const name = select.value;
-        const inValue = parseFloat(inValues[index].value) || 0;
-        const outValue = parseFloat(outValues[index].value) || 0;
-
+        const balanceValue = parseFloat(balanceValues[index].value) || 0;
         if (name) {
-            totalIn[name] = (totalIn[name] || 0) + inValue;
-            totalOut[name] = (totalOut[name] || 0) + outValue;
+            balances[name] = balanceValue;
         }
     });
 
-    // Calculate net balances
-    const balances = {};
-    for (const name of Object.keys(totalIn)) {
-        balances[name] = (totalOut[name] || 0) - (totalIn[name] || 0);
+    // Calculate total sum of balances
+    const totalSum = Object.values(balances).reduce((sum, value) => sum + value, 0);
+
+    // Display message based on the sum of balances
+    const resultsDiv = document.getElementById('results');
+    if (totalSum > 0) {
+        resultsDiv.innerHTML = `It seems that ${totalSum} are missing.`;
+        return;
+    } else if (totalSum < 0) {
+        resultsDiv.innerHTML = `It seems that there are extra ${-totalSum}.`;
+        return;
+    } else {
+        resultsDiv.innerHTML = 'Balances are equal, no missing or extra amount.';
     }
 
-    // Clear previous debts from lines at the start
-    participants.forEach((select) => {
-            const row = select.parentElement;
-            const debtInfoElement = row.querySelector('.debtInfo');
-            debtInfoElement.innerHTML = ''; // Clear previous debts
-        });
-
-    // Clear previous debts from lines at the start
-    participants.forEach((select) => {
+    participants.forEach(select => {
         const row = select.parentElement;
         const debtInfoElement = row.querySelector('.debtInfo');
         debtInfoElement.innerHTML = ''; // Clear previous debts
     });
 
-    // Determine who owes whom
+    // Calculate debts
     const positiveBalances = Object.keys(balances).filter(name => balances[name] > 0);
     const negativeBalances = Object.keys(balances).filter(name => balances[name] < 0);
 
     positiveBalances.forEach(creditor => {
-        const amountOwed = balances[creditor];
+        amountOwed = balances[creditor];
         negativeBalances.forEach(debtor => {
-            const amountToPay = Math.min(-balances[debtor], amountOwed);
+            amountToPay = Math.min(-balances[debtor], amountOwed);
             if (amountToPay > 0) {
-                // Update the original participant line with debt information
-                const debtorRow = participants.find((select) => select.value === debtor).parentElement;
+                const debtorRow = participants.find(select => select.value === debtor).parentElement;
                 debtorRow.querySelector('.debtInfo').innerHTML += `${amountToPay} --> ${creditor}, `;
-
-                // debts.push(`${debtor} owes ${creditor} ${amountToPay}`);
                 balances[creditor] -= amountToPay;
                 balances[debtor] += amountToPay;
+                amountOwed -= amountToPay;
             }
         });
     });
 
-    // Clear the trailing comma and space
-    participants.forEach((select) => {
+    // clean ', ' from end of lines
+    participants.forEach(select => {
         const row = select.parentElement;
         const debtInfoElement = row.querySelector('.debtInfo');
         if (debtInfoElement.innerHTML.endsWith(', ')) {
             debtInfoElement.innerHTML = debtInfoElement.innerHTML.slice(0, -2); // Remove last comma and space
         }
     });
-
-    // If no debts are found, notify
-    if (debts.length === 0) {
-        const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = 'No debts to settle.';
-    }
 }
 
-// Attach the calculate function to the Calc button
 document.getElementById('calcBtn').addEventListener('click', calculate);

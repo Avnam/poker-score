@@ -1,23 +1,16 @@
-// Loading saved player names from cookies
+// Loading saved player names from Local Storage
 let playerNames = [];
 let numParticipants = 2;
 
-// Function to set a cookie
-function setCookie(name, value, days) {
-    let expires = "";
-    if (days) {
-        const date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "") + expires + "; path=/";
+// Function to save data to Local Storage
+function saveToLocalStorage(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
 }
 
-// Function to get a cookie by name
-function getCookie(name) {
-    const cookies = document.cookie.split('; ');
-    const cookie = cookies.find(cookie => cookie.startsWith(name + "="));
-    return cookie ? cookie.split('=')[1] : null;
+// Function to get data from Local Storage
+function getFromLocalStorage(key) {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : null;
 }
 
 // Function to show the modal for adding a new player
@@ -53,7 +46,7 @@ function addPlayer() {
     const playerName = document.getElementById('playerNameInput').value.trim();
     if (playerName && !playerNames.includes(playerName)) {
         playerNames.push(playerName);
-        setCookie('players', JSON.stringify(playerNames), 30); // Save player names to cookies
+        saveToLocalStorage('players', playerNames); // Save player names to Local Storage
         updateParticipantList();
     }
     closeModal();
@@ -74,7 +67,7 @@ for (let i = 2; i <= 40; i++) {
 }
 
 // Set the default or saved number of participants
-const lastNumParticipants = getCookie('numParticipants');
+const lastNumParticipants = getFromLocalStorage('numParticipants');
 if (lastNumParticipants) {
     numParticipantsSelect.value = lastNumParticipants;
     numParticipants = parseInt(lastNumParticipants);
@@ -84,7 +77,7 @@ if (lastNumParticipants) {
 
 numParticipantsSelect.addEventListener('change', function() {
     numParticipants = parseInt(this.value);
-    setCookie('numParticipants', numParticipants, 30);
+    saveToLocalStorage('numParticipants', numParticipants); // Save to Local Storage
     updateParticipantList();
 });
 
@@ -173,9 +166,9 @@ function checkCalcButtonState() {
     document.getElementById('calcBtn').disabled = !allSelected;
 }
 
-// Load saved player names from cookies
-const savedPlayers = getCookie('players');
+// Load saved player names from Local Storage
+const savedPlayers = getFromLocalStorage('players');
 if (savedPlayers) {
-    playerNames = JSON.parse(savedPlayers);
+    playerNames = savedPlayers;
     updateParticipantList();
 }

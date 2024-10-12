@@ -40,3 +40,21 @@ button:hover:not(:disabled) {
 .modal-content input {
     margin-bottom: 10px;
 }
+
+
+/* styles.css */
+
+/* Add this CSS rule */
+input.inValue, input.outValue {
+    width: 80px; /* Adjust the width as needed */
+    max-width: 100%; /* Ensure it doesn't exceed the container */
+}
+
+/* Optional: Add some styles for mobile responsiveness */
+@media (max-width: 600px) {
+    input.inValue, input.outValue {
+        width: 60px; /* Even shorter for smaller screens */
+    }
+}
+
+/* Other existing styles can remain here */

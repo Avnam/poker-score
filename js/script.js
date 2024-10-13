@@ -64,6 +64,8 @@ numParticipantsSelect.addEventListener('change', function() {
     updateParticipantList();
 });
 
+updateParticipantList();
+
 // Function to update the participant list
 function updateParticipantList() {
     const participantsDiv = document.getElementById('participantsList');
@@ -115,7 +117,6 @@ function updateParticipantList() {
     updateAvailablePlayers(); // Initial check for available players
     checkCalcButtonState();   // Initial check for enabling Calc button
 }
-
 
 // Prevent duplicate player names across selects
 function updateAvailablePlayers() {

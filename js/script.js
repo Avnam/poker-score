@@ -30,6 +30,14 @@ document.getElementById('playerModal').addEventListener('keydown', function(even
     if (event.key === 'Escape') closeModal();
 });
 
+// Event listener for the "Enter" key to trigger calculation
+document.addEventListener('keydown', function(event) {
+    // Check if the Enter key is pressed and not in the player name input
+    if (event.key === 'Enter' && document.activeElement.id !== 'playerNameInput') {
+        calculate(); // Call the calculate function
+    }
+});
+
 // Add a player and update the participant list
 function addPlayer() {
     const playerName = document.getElementById('playerNameInput').value.trim();

@@ -175,29 +175,43 @@ function calculate() {
         resultsDiv.innerHTML = 'Balances are equal, no missing or extra amount.';
     }
 
+    // Clear previous debt info
     participants.forEach(select => {
         const row = select.parentElement;
         const debtInfoElement = row.querySelector('.debtInfo');
         debtInfoElement.innerHTML = ''; // Clear previous debts
     });
 
-    // Calculate debts
-    const positiveBalances = Object.keys(balances).filter(name => balances[name] > 0);
-    const negativeBalances = Object.keys(balances).filter(name => balances[name] < 0);
+    // Function to find player owing the most and owed the most
+    function findMaxOwersAndCreditors() {
+        const creditor = Object.keys(balances).reduce((max, player) =>
+            balances[player] > 0 && (max === null || balances[player] > balances[max]) ? player : max, null);
+        const debtor = Object.keys(balances).reduce((max, player) =>
+            balances[player] < 0 && (max === null || balances[player] < balances[max]) ? player : max, null);
+        return { creditor, debtor };
+    }
 
-    positiveBalances.forEach(creditor => {
-        amountOwed = balances[creditor];
-        negativeBalances.forEach(debtor => {
-            amountToPay = Math.min(-balances[debtor], amountOwed);
-            if (amountToPay > 0) {
-                const debtorRow = participants.find(select => select.value === debtor).parentElement;
-                debtorRow.querySelector('.debtInfo').innerHTML += `${amountToPay} --> ${creditor}, `;
-                balances[creditor] -= amountToPay;
-                balances[debtor] += amountToPay;
-                amountOwed -= amountToPay;
-            }
-        });
-    });
+    // Settle debts iteratively
+    let totalSettled = true;
+    while (true) {
+        const { creditor, debtor } = findMaxOwersAndCreditors();
+
+        if (!creditor || !debtor) {
+            break; // No more debts to settle
+        }
+
+        const amountToSettle = Math.min(balances[creditor], -balances[debtor]);
+
+        // Update balances
+        balances[creditor] -= amountToSettle;
+        balances[debtor] += amountToSettle;
+
+        // Update debt info in the UI
+        const debtorRow = participants.find((select) => select.value === debtor).parentElement;
+        debtorRow.querySelector('.debtInfo').innerHTML += `${amountToSettle} --> ${creditor}, `;
+
+        totalSettled = false;
+    }
 
     // clean ', ' from end of lines
     participants.forEach(select => {
